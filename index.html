@@ -1,643 +1,223 @@
 <!DOCTYPE html>
-<html lang="en" class="light">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Universal AI Chat</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        gray: {
-                            50: '#f9fafb',
-                            100: '#f3f4f6',
-                            200: '#e5e7eb',
-                            700: '#374151',
-                            800: '#1f2937',
-                            900: '#111827',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-    <style>
-        /* Custom Styles for Markdown & Layout */
-        :root {
-            color-scheme: light dark;
-        }
-        body {
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        /* Markdown Rendering Styles */
-        .markdown-body p { margin-bottom: 0.75em; }
-        .markdown-body p:last-child { margin-bottom: 0; }
-        .markdown-body pre {
-            background-color: #1f2937;
-            color: #f3f4f6;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            overflow-x: auto;
-            margin: 0.75em 0;
-            font-size: 0.875rem;
-        }
-        .markdown-body code {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            background-color: rgba(175, 184, 193, 0.2);
-            padding: 0.2em 0.4em;
-            border-radius: 6px;
-            font-size: 0.875em;
-        }
-        .markdown-body pre code {
-            background-color: transparent;
-            padding: 0;
-            font-size: inherit;
-            color: inherit;
-        }
-        .markdown-body ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 0.75em; }
-        .markdown-body ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 0.75em; }
-        .markdown-body strong { font-weight: 600; }
-        .markdown-body a { color: #3b82f6; text-decoration: underline; }
-
-        /* Loader */
-        #loading {
-            position: fixed;
-            inset: 0;
-            background-color: #ffffff;
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.25rem;
-            font-weight: 500;
-            color: #111827;
-            transition: opacity 0.3s;
-        }
-        .dark #loading {
-            background-color: #111827;
-            color: #f9fafb;
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        .dark ::-webkit-scrollbar-thumb { background: #475569; }
-
-        /* Sidebar Transition */
-        #sidebar {
-            transition: transform 0.3s ease-in-out;
-        }
-        
-        /* Blinking cursor for streaming */
-        .streaming-cursor::after {
-            content: '▋';
-            animation: blink 1s step-start infinite;
-            margin-left: 4px;
-            color: #3b82f6;
-        }
-        @keyframes blink { 50% { opacity: 0; } }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arup Browser</title>
+<style>
+:root{--bg:#f1f3f4;--bar:#fff;--tx:#202124;--mut:#5f6368;--ac:#1a73e8;--bd:#dadce0;--tab:#dee1e6;--tabA:#fff}
+@media(prefers-color-scheme:dark){:root:not([data-t=light]){--bg:#202124;--bar:#35363a;--tx:#e8eaed;--mut:#9aa0a6;--ac:#8ab4f8;--bd:#4a4b4f;--tab:#202124;--tabA:#35363a}}
+:root[data-t=dark]{--bg:#202124;--bar:#35363a;--tx:#e8eaed;--mut:#9aa0a6;--ac:#8ab4f8;--bd:#4a4b4f;--tab:#202124;--tabA:#35363a}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{display:flex;flex-direction:column;background:var(--bg);color:var(--tx);font:14px system-ui,sans-serif}
+button{background:none;border:0;color:var(--tx);cursor:pointer;border-radius:50%;width:32px;height:32px;font-size:16px;flex-shrink:0}
+button:hover{background:rgba(128,128,128,.25)}button:disabled{opacity:.3;cursor:default}
+#tabs{display:flex;align-items:flex-end;background:var(--tab);padding:6px 6px 0;gap:2px;overflow-x:auto}
+.tab{display:flex;align-items:center;gap:6px;min-width:90px;max-width:210px;flex:1;padding:7px 8px;border-radius:9px 9px 0 0;cursor:pointer;color:var(--mut);position:relative}
+.tab.a{background:var(--tabA);color:var(--tx)}
+.tab span{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.tab img{width:16px;height:16px}.tab b{width:18px;height:18px;line-height:18px;text-align:center;border-radius:50%;font-weight:400}.tab b:hover{background:rgba(128,128,128,.3)}
+.tab.l::after{content:'';position:absolute;left:0;bottom:0;height:2px;width:40%;background:var(--ac);animation:ld 1s infinite}
+@keyframes ld{from{left:-40%}to{left:100%}}
+#plus{margin-bottom:3px}
+#bar{display:flex;align-items:center;gap:4px;background:var(--bar);padding:6px 8px;border-bottom:1px solid var(--bd)}
+#url{flex:1;min-width:0;border:1px solid transparent;background:var(--bg);color:var(--tx);border-radius:20px;padding:8px 16px;font-size:14px;outline:0}
+#url:focus{border-color:var(--ac);background:var(--bar)}
+#bm{display:flex;gap:4px;background:var(--bar);padding:3px 8px;border-bottom:1px solid var(--bd);overflow-x:auto;min-height:30px;align-items:center}
+.bk{display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:14px;cursor:pointer;white-space:nowrap;font-size:13px}.bk:hover{background:rgba(128,128,128,.25)}.bk img{width:14px;height:14px}
+#warn{display:none;background:#fef7e0;color:#5f4b00;padding:5px 12px;font-size:13px;justify-content:space-between;align-items:center}
+#warn a{color:#1a56c4;margin-left:10px}
+#view{flex:1;position:relative;background:var(--bar)}
+iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff;display:none}iframe.a{display:block}
+#nt{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;padding-top:12vh;background:var(--bg);overflow:auto}
+#nt h1{font-size:44px;margin:0 0 20px;font-weight:500}
+#nt input{width:min(560px,90%);padding:13px 20px;border-radius:28px;border:1px solid var(--bd);background:var(--bar);color:var(--tx);font-size:16px;outline:0}
+#tiles{display:flex;flex-wrap:wrap;gap:14px;margin-top:34px;justify-content:center;width:min(640px,92%)}
+.tile{width:100px;text-align:center;cursor:pointer;padding:12px 4px;border-radius:12px}.tile:hover{background:rgba(128,128,128,.2)}
+.tile i{display:flex;width:48px;height:48px;border-radius:50%;background:var(--bar);margin:0 auto 6px;align-items:center;justify-content:center}.tile img{width:26px;height:26px}
+.tile div{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#panel{position:fixed;top:0;right:0;bottom:0;width:min(380px,100%);background:var(--bar);border-left:1px solid var(--bd);z-index:50;display:none;flex-direction:column;box-shadow:-4px 0 16px rgba(0,0,0,.25)}
+#panel header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--bd);font-weight:600}
+#plist{flex:1;overflow:auto;padding:6px}
+.row{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;cursor:pointer}.row:hover{background:rgba(128,128,128,.2)}
+.row .t{flex:1;overflow:hidden}.row .t div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.row small{color:var(--mut)}
+#menu{position:fixed;right:10px;top:84px;background:var(--bar);border:1px solid var(--bd);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.3);display:none;z-index:60;min-width:200px;padding:6px}
+#menu div{padding:9px 12px;border-radius:6px;cursor:pointer}#menu div:hover{background:rgba(128,128,128,.2)}
+.set{padding:14px;display:flex;flex-direction:column;gap:8px}.set input,.set select{padding:8px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--tx)}
+.set .btn{padding:9px;border-radius:8px;background:var(--ac);color:#fff;border:0;cursor:pointer;width:auto;height:auto;font-size:14px}
+</style>
 </head>
-<body class="bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 min-h-[100dvh] flex flex-col antialiased">
+<body>
+<div id="tabs"><button id="plus" title="New tab (Ctrl+T)" onclick="newTab()">＋</button></div>
+<div id="bar">
+  <button id="bk" onclick="nav(-1)" title="Back (Alt+←)">←</button>
+  <button id="fw" onclick="nav(1)" title="Forward (Alt+→)">→</button>
+  <button onclick="reload()" title="Reload (F5)">↻</button>
+  <button onclick="go(S.home)" title="Home">⌂</button>
+  <input id="url" placeholder="Search or enter address" spellcheck="false" autocomplete="off">
+  <button id="star" onclick="toggleBm()" title="Bookmark this page (Ctrl+D)">☆</button>
+  <button onclick="openExt()" title="Open in real browser tab">↗</button>
+  <button onclick="toggleMenu(event)" title="Menu">⋮</button>
+</div>
+<div id="bm"></div>
+<div id="warn"><span>Blank page / sad face? Start the proxy: run <b>node server.js</b> in this folder (Node 18+).<a href="#" onclick="openExt();return false">Open in real tab ↗</a><a href="#" onclick="openPanel('settings');return false">Set a proxy</a></span><button onclick="this.parentNode.style.display='none';S.hideWarn=1;save()">✕</button></div>
+<div id="view">
+  <div id="nt"><h1>Arup Browser</h1><input id="ntq" placeholder="Search the web or type a URL" autofocus><div id="tiles"></div></div>
+</div>
+<div id="menu">
+  <div onclick="newTab();hideMenu()">New tab</div>
+  <div onclick="openPanel('history');hideMenu()">History</div>
+  <div onclick="openPanel('bookmarks');hideMenu()">Bookmarks</div>
+  <div onclick="toggleTheme();hideMenu()">Toggle dark / light</div>
+  <div onclick="openPanel('settings');hideMenu()">Settings</div>
+</div>
+<div id="panel"><header><span id="ptitle"></span><button onclick="closePanel()">✕</button></header><div id="plist"></div></div>
 
-    <div id="loading">Loading App...</div>
+<script>
+const $=id=>document.getElementById(id);
+const ENG={DuckDuckGo:'https://html.duckduckgo.com/html/?q=',Bing:'https://www.bing.com/search?q=',Google:'https://www.google.com/search?igu=1&q=',Wikipedia:'https://en.wikipedia.org/w/index.php?search='};
+let S={engine:'DuckDuckGo',home:'',proxy:'',theme:'auto',hideWarn:0,bm:[{t:'Wikipedia',u:'https://en.wikipedia.org'},{t:'DuckDuckGo',u:'https://duckduckgo.com'},{t:'MDN',u:'https://developer.mozilla.org'},{t:'GitHub',u:'https://github.com'}],hist:[]};
+try{Object.assign(S,JSON.parse(localStorage.getItem('arup_browser')||'{}'))}catch(e){}
+if(!S.v2){S.v2=1;if(!S.proxy)S.proxy='http://localhost:3000/?url='}
+const save=()=>{try{localStorage.setItem('arup_browser',JSON.stringify(S))}catch(e){}};
+let tabs=[],active=null,tid=0;
+const host=u=>{try{return new URL(u).hostname.replace(/^www\./,'')}catch(e){return u}};
+const fav=u=>`https://www.google.com/s2/favicons?sz=32&domain=${host(u)}`;
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-    <div id="app" class="flex flex-1 w-full overflow-hidden hidden relative">
-        
-        <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden" onclick="toggleSidebar()"></div>
+function toUrl(q){
+  q=q.trim();if(!q)return'';
+  if(/^(https?:)\/\//i.test(q))return q;
+  if(/^[\w-]+(\.[\w-]+)+(:\d+)?(\/.*)?$/.test(q)||/^localhost(:\d+)?/.test(q))return'https://'+q;
+  return ENG[S.engine]+encodeURIComponent(q);
+}
+const viaProxy=u=>S.proxy?S.proxy+encodeURIComponent(u):u;
 
-        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transform -translate-x-full md:relative md:translate-x-0">
-            <div class="p-4">
-                <button onclick="createNewChat()" class="flex items-center gap-2 w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors shadow-sm font-medium">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    New Chat
-                </button>
-            </div>
+function newTab(url){
+  const f=document.createElement('iframe');
+  f.setAttribute('allow','fullscreen; clipboard-write');
+  f.setAttribute('referrerpolicy','no-referrer');
+  const t={id:++tid,url:'',title:'New Tab',h:[],i:-1,f,loading:false};
+  f.onload=()=>{t.loading=false;renderTabs()};
+  $('view').appendChild(f);tabs.push(t);switchTab(t.id);
+  if(url)go(url);else showNT();
+  return t;
+}
+const T=()=>tabs.find(t=>t.id===active);
+function switchTab(id){
+  active=id;tabs.forEach(t=>t.f.classList.toggle('a',t.id===id));
+  renderTabs();sync();
+}
+function closeTab(id,e){
+  e&&e.stopPropagation();
+  const i=tabs.findIndex(t=>t.id===id);tabs[i].f.remove();tabs.splice(i,1);
+  if(!tabs.length)return newTab();
+  if(active===id)switchTab(tabs[Math.min(i,tabs.length-1)].id);else renderTabs();
+}
+function renderTabs(){
+  document.querySelectorAll('.tab').forEach(e=>e.remove());
+  tabs.forEach(t=>{
+    const d=document.createElement('div');d.className='tab'+(t.id===active?' a':'')+(t.loading?' l':'');
+    d.innerHTML=`${t.url?`<img src="${fav(t.url)}" onerror="this.style.display='none'">`:'🌐'}<span>${esc(t.title)}</span><b>✕</b>`;
+    d.onclick=()=>switchTab(t.id);d.lastChild.onclick=e=>closeTab(t.id,e);d.onauxclick=e=>{if(e.button===1)closeTab(t.id,e)};
+    $('tabs').insertBefore(d,$('plus'));
+  });
+}
+function showNT(){
+  const on=!T().url;$('nt').style.display=on?'flex':'none';
+  if(on){
+    $('tiles').innerHTML='';
+    S.bm.slice(0,12).forEach(b=>{const d=document.createElement('div');d.className='tile';d.innerHTML=`<i><img src="${fav(b.u)}"></i><div>${esc(b.t)}</div>`;d.onclick=()=>go(b.u);$('tiles').appendChild(d)});
+    if(document.activeElement!==$('url'))setTimeout(()=>$('ntq').focus(),0);
+  }
+}
+function go(input,push=true){
+  const t=T();const u=toUrl(input||S.home);
+  if(!u){t.url='';t.title='New Tab';t.f.removeAttribute('src');sync();renderTabs();return}
+  if(push){t.h=t.h.slice(0,t.i+1);t.h.push(u);t.i=t.h.length-1}
+  t.url=u;t.title=host(u);t.loading=true;t.f.src=viaProxy(u);
+  S.hist.unshift({u,t:t.title,d:Date.now()});S.hist=S.hist.slice(0,300);save();
+  $('warn').style.display=S.hideWarn?'none':'flex';
+  sync();renderTabs();
+}
+function nav(d){
+  const t=T();const n=t.i+d;
+  if(n<-1||n>=t.h.length)return;
+  if(n===-1){t.i=-1;t.url='';t.title='New Tab';t.f.removeAttribute('src');sync();renderTabs();return}
+  t.i=n;go(t.h[n],false);
+}
+function reload(){const t=T();if(!t.url)return;t.loading=true;t.f.src='about:blank';setTimeout(()=>t.f.src=viaProxy(t.url),30);renderTabs()}
+function sync(){
+  const t=T();if(!t)return;
+  $('url').value=t.url;$('bk').disabled=t.i<0;$('fw').disabled=t.i>=t.h.length-1;
+  $('star').textContent=S.bm.some(b=>b.u===t.url)?'★':'☆';
+  $('star').style.color=S.bm.some(b=>b.u===t.url)?'#fbbc04':'';
+  $('warn').style.display=t.url&&!S.hideWarn?'flex':'none';
+  showNT();renderBm();document.title=(t.url?t.title+' – ':'')+'Arup Browser';
+}
+function renderBm(){
+  const b=$('bm');b.innerHTML='';
+  if(!S.bm.length)b.innerHTML='<small style="color:var(--mut)">Bookmarks appear here (☆ or Ctrl+D)</small>';
+  S.bm.forEach(x=>{const d=document.createElement('div');d.className='bk';d.title=x.u;d.innerHTML=`<img src="${fav(x.u)}"><span>${esc(x.t)}</span>`;d.onclick=()=>go(x.u);
+    d.oncontextmenu=e=>{e.preventDefault();if(confirm('Remove bookmark "'+x.t+'"?')){S.bm=S.bm.filter(y=>y!==x);save();sync()}};b.appendChild(d)});
+}
+function toggleBm(){
+  const t=T();if(!t.url)return;
+  const i=S.bm.findIndex(b=>b.u===t.url);
+  if(i>=0)S.bm.splice(i,1);else S.bm.push({t:prompt('Bookmark name',t.title)||t.title,u:t.url});
+  save();sync();
+}
+function openExt(){const t=T();window.open(t.url||S.home||'about:blank','_blank','noopener')}
 
-            <div class="flex-1 overflow-y-auto px-3 py-2 space-y-1" id="chat-list">
-                </div>
+// Panels
+function openPanel(kind){
+  const p=$('panel'),l=$('plist');p.style.display='flex';l.innerHTML='';
+  $('ptitle').textContent={history:'History',bookmarks:'Bookmarks',settings:'Settings'}[kind];
+  if(kind==='settings'){
+    l.innerHTML=`<div class="set"><label>Search engine</label><select id="s-eng">${Object.keys(ENG).map(k=>`<option ${k===S.engine?'selected':''}>${k}</option>`).join('')}</select>
+    <label>Homepage (blank = new tab page)</label><input id="s-home" value="${esc(S.home)}" placeholder="https://...">
+    <label>Proxy prefix (optional, e.g. your own proxy URL ending with ?url=)</label><input id="s-proxy" value="${esc(S.proxy)}" placeholder="https://your-proxy.example/?url=">
+    <label>Theme</label><select id="s-theme"><option value="auto">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select>
+    <button class="btn" onclick="saveSet()">Save</button><button class="btn" style="background:#d93025" onclick="clearHist()">Clear history</button></div>`;
+    $('s-theme').value=S.theme;return;
+  }
+  const items=kind==='history'?S.hist.map(h=>({t:h.t,u:h.u,s:new Date(h.d).toLocaleString()})):S.bm.map(b=>({t:b.t,u:b.u,s:b.u}));
+  if(!items.length)l.innerHTML='<div class="row"><small>Nothing here yet</small></div>';
+  items.forEach(x=>{const d=document.createElement('div');d.className='row';d.innerHTML=`<img src="${fav(x.u)}" width="16" height="16"><div class="t"><div>${esc(x.t)}</div><small>${esc(x.s)}</small></div>`;d.onclick=()=>{go(x.u);closePanel()};l.appendChild(d)});
+}
+function closePanel(){$('panel').style.display='none'}
+function saveSet(){S.engine=$('s-eng').value;S.home=$('s-home').value.trim();S.proxy=$('s-proxy').value.trim();S.theme=$('s-theme').value;save();applyTheme();closePanel()}
+function clearHist(){S.hist=[];save();closePanel()}
+function applyTheme(){if(S.theme==='auto')document.documentElement.removeAttribute('data-t');else document.documentElement.dataset.t=S.theme}
+function toggleTheme(){const dark=getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()==='#202124';S.theme=dark?'light':'dark';save();applyTheme()}
+function toggleMenu(e){e.stopPropagation();const m=$('menu');m.style.display=m.style.display==='block'?'none':'block'}
+function hideMenu(){$('menu').style.display='none'}
 
-            <div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
-                <button onclick="toggleTheme()" class="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-medium">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="theme-icon">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                    </svg>
-                    <span id="theme-text">Dark Mode</span>
-                </button>
-                <button onclick="openSettings()" class="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-medium">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                    Settings
-                </button>
-            </div>
-        </aside>
-
-        <main class="flex-1 flex flex-col h-full bg-white dark:bg-gray-900 relative">
-            <header class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 md:hidden bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
-                <button onclick="toggleSidebar()" class="p-2 -ml-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                </button>
-                <span class="font-semibold text-lg" id="mobile-chat-title">New Chat</span>
-                <div class="w-8"></div> </header>
-
-            <div id="messages-container" class="flex-1 overflow-y-auto p-4 md:p-6 pb-32">
-                </div>
-
-            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-transparent dark:from-gray-900 dark:via-gray-900 p-4 md:p-6 pt-10">
-                <form id="chat-form" class="max-w-4xl mx-auto relative flex items-end gap-2 bg-gray-100 dark:bg-gray-800 rounded-3xl p-2 pl-4 shadow-sm border border-gray-200 dark:border-gray-700 focus-within:ring-2 focus-within:ring-blue-500/50 transition-all">
-                    <textarea 
-                        id="message-input" 
-                        rows="1" 
-                        class="flex-1 bg-transparent border-0 focus:ring-0 resize-none max-h-32 py-3 px-2 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400" 
-                        placeholder="Ask anything..."
-                        required></textarea>
-                    <button type="submit" id="send-btn" class="p-3 rounded-full bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0 mb-1 mr-1">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-                    </button>
-                </form>
-                <div class="text-center text-xs text-gray-400 mt-2">AI can make mistakes. Check important info.</div>
-            </div>
-        </main>
-    </div>
-
-    <div id="settings-modal" class="fixed inset-0 bg-black/60 z-[60] hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-2xl transform transition-all">
-            <h2 class="text-xl font-bold mb-4">Settings</h2>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium mb-1">OpenRouter API Key</label>
-                    <input type="password" id="setting-api-key" placeholder="sk-or-v1-..." class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium mb-1">Model Name</label>
-                    <input type="text" id="setting-model" value="deepseek/deepseek-r1:free" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-colors">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium mb-1">System Prompt</label>
-                    <textarea id="setting-system" rows="3" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-colors" placeholder="You are a helpful AI..."></textarea>
-                </div>
-            </div>
-
-            <div class="mt-6 flex justify-end gap-3">
-                <button onclick="closeSettings()" class="px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors font-medium">Cancel</button>
-                <button onclick="saveSettings()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">Save</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // --- 1. State Management ---
-        const defaultState = {
-            chats: [],
-            activeChatId: null,
-            settings: {
-                apiKey: '',
-                model: 'deepseek/deepseek-r1:free',
-                systemPrompt: 'You are a highly capable and helpful AI assistant.',
-                theme: 'light'
-            }
-        };
-
-        let state = JSON.parse(JSON.stringify(defaultState));
-        let isGenerating = false;
-
-        // --- 2. Initialization ---
-        document.addEventListener('DOMContentLoaded', () => {
-            try {
-                loadState();
-                applyTheme();
-                
-                if (state.chats.length === 0) {
-                    createNewChat();
-                } else {
-                    if (!state.activeChatId || !state.chats.find(c => c.id === state.activeChatId)) {
-                        state.activeChatId = state.chats[0].id;
-                    }
-                    renderSidebar();
-                    renderChat();
-                }
-
-                setupEventListeners();
-                
-                // Remove loader
-                const loader = document.getElementById('loading');
-                const app = document.getElementById('app');
-                loader.style.opacity = '0';
-                setTimeout(() => {
-                    loader.style.display = 'none';
-                    app.classList.remove('hidden');
-                }, 300);
-
-            } catch (err) {
-                console.error("Initialization Error:", err);
-                document.getElementById('loading').textContent = "Error loading app. Please clear localStorage and refresh.";
-            }
-        });
-
-        // --- 3. Persistence ---
-        function loadState() {
-            const saved = localStorage.getItem('universalAiState');
-            if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    state.chats = parsed.chats || [];
-                    state.activeChatId = parsed.activeChatId || null;
-                    state.settings = { ...defaultState.settings, ...parsed.settings };
-                } catch (e) {
-                    console.error("Failed to parse state", e);
-                }
-            }
-        }
-
-        function saveState() {
-            localStorage.setItem('universalAiState', JSON.stringify(state));
-        }
-
-        // --- 4. Core Logic ---
-        function createNewChat() {
-            const newChat = {
-                id: Date.now().toString(),
-                title: 'New Chat',
-                messages: []
-            };
-            state.chats.unshift(newChat);
-            state.activeChatId = newChat.id;
-            saveState();
-            renderSidebar();
-            renderChat();
-            if(window.innerWidth < 768) toggleSidebar(); // close sidebar on mobile
-        }
-
-        function getActiveChat() {
-            return state.chats.find(c => c.id === state.activeChatId);
-        }
-
-        function switchChat(id) {
-            if (isGenerating) return;
-            state.activeChatId = id;
-            saveState();
-            renderSidebar();
-            renderChat();
-            if(window.innerWidth < 768) toggleSidebar();
-        }
-
-        function deleteChat(id, event) {
-            event.stopPropagation();
-            if (confirm("Are you sure you want to delete this chat?")) {
-                state.chats = state.chats.filter(c => c.id !== id);
-                if (state.activeChatId === id) {
-                    state.activeChatId = state.chats.length > 0 ? state.chats[0].id : null;
-                }
-                if (state.chats.length === 0) createNewChat();
-                else {
-                    saveState();
-                    renderSidebar();
-                    renderChat();
-                }
-            }
-        }
-
-        function renameChat(id, event) {
-            event.stopPropagation();
-            const chat = state.chats.find(c => c.id === id);
-            const newTitle = prompt("Enter new chat name:", chat.title);
-            if (newTitle && newTitle.trim()) {
-                chat.title = newTitle.trim();
-                saveState();
-                renderSidebar();
-                
-                if (id === state.activeChatId) {
-                    document.getElementById('mobile-chat-title').textContent = chat.title;
-                }
-            }
-        }
-
-        // --- 5. Rendering ---
-        function renderSidebar() {
-            const list = document.getElementById('chat-list');
-            list.innerHTML = '';
-
-            state.chats.forEach(chat => {
-                const isActive = chat.id === state.activeChatId;
-                const div = document.createElement('div');
-                div.className = `group flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${isActive ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`;
-                div.onclick = () => switchChat(chat.id);
-                
-                div.innerHTML = `
-                    <div class="flex items-center gap-3 overflow-hidden">
-                        <svg class="w-4 h-4 shrink-0 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
-                        <span class="truncate text-sm font-medium">${escapeHTML(chat.title)}</span>
-                    </div>
-                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onclick="renameChat('${chat.id}', event)" class="p-1.5 hover:bg-black/10 dark:hover:bg-white/10 rounded" title="Rename">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                        </button>
-                        <button onclick="deleteChat('${chat.id}', event)" class="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded" title="Delete">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
-                    </div>
-                `;
-                list.appendChild(div);
-            });
-        }
-
-        function renderChat() {
-            const container = document.getElementById('messages-container');
-            const chat = getActiveChat();
-            document.getElementById('mobile-chat-title').textContent = chat.title;
-            container.innerHTML = '';
-
-            if (chat.messages.length === 0) {
-                container.innerHTML = `
-                    <div class="h-full flex flex-col items-center justify-center text-center px-4 fade-in">
-                        <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
-                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                        </div>
-                        <h2 class="text-2xl font-semibold mb-2">How can I help you today?</h2>
-                        <p class="text-gray-500 dark:text-gray-400 max-w-md">I'm connected to OpenRouter. Make sure to configure your API key in settings.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            const fragment = document.createDocumentFragment();
-            chat.messages.forEach(msg => {
-                fragment.appendChild(createMessageElement(msg.role, msg.content));
-            });
-            container.appendChild(fragment);
-            scrollToBottom();
-        }
-
-        function createMessageElement(role, content, isStreaming = false) {
-            const div = document.createElement('div');
-            div.className = `flex w-full mb-6 ${role === 'user' ? 'justify-end' : 'justify-start'}`;
-            
-            const innerDiv = document.createElement('div');
-            
-            if (role === 'user') {
-                innerDiv.className = 'max-w-[85%] md:max-w-[70%] bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-3xl rounded-br-sm px-5 py-3 shadow-sm whitespace-pre-wrap font-medium';
-                innerDiv.textContent = content; // pure text for user
-            } else {
-                // AI styling (Gemini-esque: flush left, no big bubble background, clean text)
-                innerDiv.className = 'max-w-[100%] md:max-w-[85%] text-gray-900 dark:text-gray-100 px-2 py-1 markdown-body w-full';
-                
-                // Avatar + Content wrapper for AI
-                const wrapper = document.createElement('div');
-                wrapper.className = 'flex gap-4 w-full';
-                
-                const avatar = document.createElement('div');
-                avatar.className = 'w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 shrink-0 flex items-center justify-center mt-1 shadow-sm';
-                avatar.innerHTML = `<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>`;
-                
-                const contentDiv = document.createElement('div');
-                contentDiv.className = 'flex-1 overflow-hidden';
-                if(isStreaming) contentDiv.classList.add('streaming-cursor');
-                contentDiv.innerHTML = parseMarkdown(content);
-                
-                wrapper.appendChild(avatar);
-                wrapper.appendChild(contentDiv);
-                innerDiv.appendChild(wrapper);
-            }
-            
-            div.appendChild(innerDiv);
-            return div;
-        }
-
-        function scrollToBottom() {
-            const container = document.getElementById('messages-container');
-            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-        }
-
-        // --- 6. API & Streaming ---
-        async function handleSend(e) {
-            e.preventDefault();
-            if (isGenerating) return;
-
-            const input = document.getElementById('message-input');
-            const text = input.value.trim();
-            if (!text) return;
-
-            if (!state.settings.apiKey) {
-                alert("Please set your OpenRouter API Key in Settings first.");
-                openSettings();
-                return;
-            }
-
-            const chat = getActiveChat();
-            
-            // Auto-generate title for first message
-            if (chat.messages.length === 0) {
-                chat.title = text.length > 25 ? text.substring(0, 25) + '...' : text;
-                renderSidebar();
-            }
-
-            // 1. Add User Message
-            chat.messages.push({ role: 'user', content: text });
-            input.value = '';
-            input.style.height = 'auto';
-            saveState();
-            renderChat();
-
-            // 2. Setup AI Response Placeholder
-            isGenerating = true;
-            document.getElementById('send-btn').disabled = true;
-            const container = document.getElementById('messages-container');
-            
-            // Remove the empty state if it was there
-            if(container.querySelector('h2')) container.innerHTML = '';
-            
-            const aiMsgDiv = createMessageElement('assistant', '', true);
-            container.appendChild(aiMsgDiv);
-            scrollToBottom();
-            
-            const contentDiv = aiMsgDiv.querySelector('.flex-1');
-            let aiFullText = "";
-
-            // 3. Prepare API Request
-            const messagesPayload = [
-                { role: 'system', content: state.settings.systemPrompt },
-                ...chat.messages.map(m => ({ role: m.role, content: m.content }))
-            ];
-
-            try {
-                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${state.settings.apiKey}`,
-                        'HTTP-Referer': window.location.href, // Required by OpenRouter
-                        'X-Title': 'Universal AI Chat'
-                    },
-                    body: JSON.stringify({
-                        model: state.settings.model,
-                        messages: messagesPayload,
-                        stream: true
-                    })
-                });
-
-                if (!response.ok) {
-                    const errText = await response.text();
-                    throw new Error(`API Error: ${response.status} - ${errText}`);
-                }
-
-                // 4. Handle Stream
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder('utf-8');
-                let done = false;
-
-                while (!done) {
-                    const { value, done: readerDone } = await reader.read();
-                    done = readerDone;
-                    if (value) {
-                        const chunk = decoder.decode(value, { stream: true });
-                        const lines = chunk.split('\n');
-                        
-                        for (const line of lines) {
-                            if (line.trim() === 'data: [DONE]') {
-                                done = true;
-                                break;
-                            }
-                            if (line.startsWith('data: ')) {
-                                try {
-                                    const data = JSON.parse(line.slice(6));
-                                    if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
-                                        aiFullText += data.choices[0].delta.content;
-                                        contentDiv.innerHTML = parseMarkdown(aiFullText);
-                                        // Auto scroll if near bottom
-                                        if (container.scrollHeight - container.scrollTop <= container.clientHeight + 100) {
-                                            scrollToBottom();
-                                        }
-                                    }
-                                } catch (e) {
-                                    // Ignore partial JSON parses in chunks
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Finalize message
-                chat.messages.push({ role: 'assistant', content: aiFullText });
-                
-            } catch (error) {
-                console.error("Chat Error:", error);
-                aiFullText = `**Error:** ${error.message}\n\nPlease check your API key and network connection.`;
-                contentDiv.innerHTML = parseMarkdown(aiFullText);
-                chat.messages.push({ role: 'assistant', content: aiFullText });
-            } finally {
-                contentDiv.classList.remove('streaming-cursor');
-                isGenerating = false;
-                document.getElementById('send-btn').disabled = false;
-                saveState();
-                scrollToBottom();
-                setTimeout(() => document.getElementById('message-input').focus(), 10);
-            }
-        }
-
-        // --- 7. Utilities & Helpers ---
-        function parseMarkdown(text) {
-            if (!text) return '';
-            // Basic marked options
-            marked.setOptions({
-                breaks: true,
-                gfm: true
-            });
-            return marked.parse(text);
-        }
-
-        function escapeHTML(str) {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
-
-        // --- 8. UI Interactions ---
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            
-            if (sidebar.classList.contains('-translate-x-full')) {
-                sidebar.classList.remove('-translate-x-full');
-                overlay.classList.remove('hidden');
-            } else {
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
-            }
-        }
-
-        function openSettings() {
-            document.getElementById('setting-api-key').value = state.settings.apiKey;
-            document.getElementById('setting-model').value = state.settings.model;
-            document.getElementById('setting-system').value = state.settings.systemPrompt;
-            document.getElementById('settings-modal').classList.remove('hidden');
-        }
-
-        function closeSettings() {
-            document.getElementById('settings-modal').classList.add('hidden');
-        }
-
-        function saveSettings() {
-            state.settings.apiKey = document.getElementById('setting-api-key').value.trim();
-            state.settings.model = document.getElementById('setting-model').value.trim();
-            state.settings.systemPrompt = document.getElementById('setting-system').value.trim();
-            saveState();
-            closeSettings();
-        }
-
-        function toggleTheme() {
-            state.settings.theme = state.settings.theme === 'dark' ? 'light' : 'dark';
-            saveState();
-            applyTheme();
-        }
-
-        function applyTheme() {
-            const html = document.documentElement;
-            const icon = document.getElementById('theme-icon');
-            const text = document.getElementById('theme-text');
-
-            if (state.settings.theme === 'dark') {
-                html.classList.add('dark');
-                text.textContent = 'Light Mode';
-                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>`;
-            } else {
-                html.classList.remove('dark');
-                text.textContent = 'Dark Mode';
-                icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>`;
-            }
-        }
-
-        function setupEventListeners() {
-            const form = document.getElementById('chat-form');
-            const input = document.getElementById('message-input');
-
-            // Auto-resize textarea
-            input.addEventListener('input', function() {
-                this.style.height = 'auto';
-                this.style.height = (this.scrollHeight) + 'px';
-            });
-
-            // Handle Enter key (Shift+Enter for new line)
-            input.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    if(!isGenerating && input.value.trim()) form.dispatchEvent(new Event('submit'));
-                }
-            });
-
-            form.addEventListener('submit', handleSend);
-        }
-
-    </script>
+// Events
+$('url').addEventListener('keydown',e=>{if(e.key==='Enter'){go($('url').value);e.target.blur()}if(e.key==='Escape'){sync();e.target.blur()}});
+$('url').addEventListener('focus',e=>e.target.select());
+$('ntq').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.value.trim()){go(e.target.value);e.target.value=''}});
+document.addEventListener('click',hideMenu);
+document.addEventListener('keydown',e=>{
+  const c=e.ctrlKey||e.metaKey;
+  if(c&&e.key==='t'){e.preventDefault();newTab()}
+  else if(c&&e.key==='w'){e.preventDefault();closeTab(active)}
+  else if(c&&e.key==='l'){e.preventDefault();$('url').focus()}
+  else if(c&&e.key==='d'){e.preventDefault();toggleBm()}
+  else if(c&&e.key==='h'){e.preventDefault();openPanel('history')}
+  else if(e.altKey&&e.key==='ArrowLeft')nav(-1);
+  else if(e.altKey&&e.key==='ArrowRight')nav(1);
+  else if(e.key==='F5'){e.preventDefault();reload()}
+  else if(c&&e.key==='Tab'){e.preventDefault();const i=tabs.findIndex(t=>t.id===active);switchTab(tabs[(i+1)%tabs.length].id)}
+});
+window.addEventListener('message',e=>{
+  const d=e.data;if(!d||!d.arup)return;
+  const t=tabs.find(x=>x.f.contentWindow===e.source);if(!t)return;
+  if(d.title)t.title=d.title;
+  if(d.url&&d.url!==t.url){t.h=t.h.slice(0,t.i+1);t.h.push(d.url);t.i=t.h.length-1;t.url=d.url;S.hist.unshift({u:d.url,t:t.title,d:Date.now()});S.hist=S.hist.slice(0,300);save()}
+  if(t.id===active)sync();renderTabs();
+});
+applyTheme();newTab(S.home||undefined);
+</script>
 </body>
 </html>
